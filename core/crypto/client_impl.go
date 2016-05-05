@@ -20,7 +20,7 @@ under the License.
 package crypto
 
 import (
-	"github.com/hyperledger/fabric/core/crypto/ecies"
+	"github.com/hyperledger/fabric/core/crypto/primitives"
 	"github.com/hyperledger/fabric/core/crypto/utils"
 	obc "github.com/hyperledger/fabric/protos"
 )
@@ -31,7 +31,7 @@ type clientImpl struct {
 	isInitialized bool
 
 	// Chain
-	chainPublicKey ecies.PublicKey
+	chainPublicKey primitives.PublicKey
 	queryStateKey  []byte
 
 	// TCA KDFKey
@@ -55,6 +55,23 @@ func (client *clientImpl) NewChaincodeDeployTransaction(chaincodeDeploymentSpec 
 
 	// Create Transaction
 	return client.newChaincodeDeployUsingTCert(chaincodeDeploymentSpec, uuid, tCert, nil)
+}
+
+// GetNextTCert Gets next available (not yet used) transaction certificate.
+func (client *clientImpl) GetNextTCert() (tCert, error) {
+	// Verify that the client is initialized
+	if !client.isInitialized {
+		return nil, utils.ErrNotInitialized
+	}
+
+	// Get next available (not yet used) transaction certificate
+	tCert, err := client.tCertPool.GetNextTCert()
+	if err != nil {
+		client.error("Failed getting next transaction certificate [%s].", err.Error())
+		return nil, err
+	}
+
+	return tCert, err
 }
 
 // NewChaincodeInvokeTransaction is used to invoke chaincode's functions.

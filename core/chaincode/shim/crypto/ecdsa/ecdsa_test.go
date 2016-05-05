@@ -20,22 +20,161 @@ under the License.
 package ecdsa
 
 import (
-	"github.com/hyperledger/fabric/core/crypto/conf"
-	"github.com/hyperledger/fabric/core/crypto/utils"
+	"github.com/hyperledger/fabric/core/crypto/primitives"
 	"testing"
 )
 
 func TestSignatureVerifier(t *testing.T) {
 	// Create a signature
-	conf.InitSecurityLevel(256)
+	primitives.SetSecurityLevel("SHA3", 256)
 
-	cert, key, err := utils.NewSelfSignedCert()
+	cert, key, err := primitives.NewSelfSignedCert()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	message := []byte("Hello World!")
-	signature, err := utils.ECDSASign(key, message)
+	signature, err := primitives.ECDSASign(key, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Instantiate a new SignatureVerifier
+	sv := NewX509ECDSASignatureVerifier()
+
+	// Verify the signature
+	ok, err := sv.Verify(cert, signature, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("Signature does not verify")
+	}
+}
+
+func TestSignatureVerifierSHA2(t *testing.T) {
+	// Create a signature
+	primitives.SetSecurityLevel("SHA2", 256)
+
+	cert, key, err := primitives.NewSelfSignedCert()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	message := []byte("Hello World!")
+	signature, err := primitives.ECDSASign(key, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Instantiate a new SignatureVerifier
+	sv := NewX509ECDSASignatureVerifier()
+
+	// Verify the signature
+	ok, err := sv.Verify(cert, signature, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("Signature does not verify")
+	}
+}
+
+func TestSignatureVerifierSHA2_384(t *testing.T) {
+	// Create a signature
+	primitives.SetSecurityLevel("SHA2", 384)
+
+	cert, key, err := primitives.NewSelfSignedCert()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	message := []byte("Hello World!")
+	signature, err := primitives.ECDSASign(key, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Instantiate a new SignatureVerifier
+	sv := NewX509ECDSASignatureVerifier()
+
+	// Verify the signature
+	ok, err := sv.Verify(cert, signature, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("Signature does not verify")
+	}
+}
+
+func TestSignatureVerifierSHA3_384(t *testing.T) {
+	// Create a signature
+	primitives.SetSecurityLevel("SHA3", 384)
+
+	cert, key, err := primitives.NewSelfSignedCert()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	message := []byte("Hello World!")
+	signature, err := primitives.ECDSASign(key, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Instantiate a new SignatureVerifier
+	sv := NewX509ECDSASignatureVerifier()
+
+	// Verify the signature
+	ok, err := sv.Verify(cert, signature, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("Signature does not verify")
+	}
+}
+
+func TestSignatureVerifierSHA2_512(t *testing.T) {
+	// Create a signature
+	primitives.SetSecurityLevel("SHA2", 512)
+
+	cert, key, err := primitives.NewSelfSignedCert()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	message := []byte("Hello World!")
+	signature, err := primitives.ECDSASign(key, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Instantiate a new SignatureVerifier
+	sv := NewX509ECDSASignatureVerifier()
+
+	// Verify the signature
+	ok, err := sv.Verify(cert, signature, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("Signature does not verify")
+	}
+}
+
+func TestSignatureVerifierSHA3_512(t *testing.T) {
+	// Create a signature
+	primitives.SetSecurityLevel("SHA3", 512)
+
+	cert, key, err := primitives.NewSelfSignedCert()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	message := []byte("Hello World!")
+	signature, err := primitives.ECDSASign(key, message)
 	if err != nil {
 		t.Fatal(err)
 	}

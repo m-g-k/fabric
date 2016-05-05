@@ -90,13 +90,13 @@ func (ledger *Ledger) BeginTxBatch(id interface{}) error {
 	return nil
 }
 
-// GetTXBatchPreviewBlock returns a preview block that will have the same
-// block.GetHash() result as the block commited to the database if
-// ledger.CommitTxBatch is called with the same parameters. If the state is modified
-// by a transaction between these two calls, the hash will be different. The
-// preview block does not include non-hashed data such as the local timestamp.
-func (ledger *Ledger) GetTXBatchPreviewBlock(id interface{},
-	transactions []*protos.Transaction, metadata []byte) (*protos.Block, error) {
+// GetTXBatchPreviewBlockInfo returns a preview block info that will
+// contain the same information as GetBlockchainInfo will return after
+// ledger.CommitTxBatch is called with the same parameters. If the
+// state is modified by a transaction between these two calls, the
+// contained hash will be different.
+func (ledger *Ledger) GetTXBatchPreviewBlockInfo(id interface{},
+	transactions []*protos.Transaction, metadata []byte) (*protos.BlockchainInfo, error) {
 	err := ledger.checkValidIDCommitORRollback(id)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,9 @@ func (ledger *Ledger) GetTXBatchPreviewBlock(id interface{},
 	if err != nil {
 		return nil, err
 	}
-	return ledger.blockchain.buildBlock(protos.NewBlock(transactions, metadata), stateHash), nil
+	block := ledger.blockchain.buildBlock(protos.NewBlock(transactions, metadata), stateHash)
+	info := ledger.blockchain.getBlockchainInfoForBlock(ledger.blockchain.getSize()+1, block)
+	return info, nil
 }
 
 // CommitTxBatch - gets invoked when the current transaction-batch needs to be committed
@@ -214,6 +216,23 @@ func (ledger *Ledger) SetState(chaincodeID string, key string, value []byte) err
 // DeleteState tracks the deletion of state for chaincodeID and key. Does not immideatly writes to DB
 func (ledger *Ledger) DeleteState(chaincodeID string, key string) error {
 	return ledger.state.Delete(chaincodeID, key)
+}
+
+// CopyState copies all the key-values from sourceChaincodeID to destChaincodeID
+func (ledger *Ledger) CopyState(sourceChaincodeID string, destChaincodeID string) error {
+	return ledger.state.CopyState(sourceChaincodeID, destChaincodeID)
+}
+
+// GetStateMultipleKeys returns the values for the multiple keys.
+// This method is mainly to amortize the cost of grpc communication between chaincode shim peer
+func (ledger *Ledger) GetStateMultipleKeys(chaincodeID string, keys []string, committed bool) ([][]byte, error) {
+	return ledger.state.GetMultipleKeys(chaincodeID, keys, committed)
+}
+
+// SetStateMultipleKeys sets the values for the multiple keys.
+// This method is mainly to amortize the cost of grpc communication between chaincode shim peer
+func (ledger *Ledger) SetStateMultipleKeys(chaincodeID string, kvs map[string][]byte) error {
+	return ledger.state.SetMultipleKeys(chaincodeID, kvs)
 }
 
 // GetStateSnapshot returns a point-in-time view of the global state for the current block. This

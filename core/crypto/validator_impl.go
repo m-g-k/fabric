@@ -21,10 +21,9 @@ package crypto
 
 import (
 	"crypto/ecdsa"
-	"crypto/x509"
 
 	"fmt"
-	"github.com/hyperledger/fabric/core/crypto/ecies"
+	"github.com/hyperledger/fabric/core/crypto/primitives"
 	"github.com/hyperledger/fabric/core/crypto/utils"
 	obc "github.com/hyperledger/fabric/protos"
 )
@@ -36,10 +35,8 @@ type validatorImpl struct {
 
 	isInitialized bool
 
-	enrollCerts map[string]*x509.Certificate
-
 	// Chain
-	chainPrivateKey ecies.PrivateKey
+	chainPrivateKey primitives.PrivateKey
 }
 
 // TransactionPreValidation verifies that the transaction is
@@ -170,22 +167,8 @@ func (validator *validatorImpl) init(name string, pwd []byte) error {
 		return err
 	}
 
-	// Initialize keystore
-	validator.debug("Init keystore...")
-	err := validator.initKeyStore()
-	if err != nil {
-		if err != utils.ErrKeyStoreAlreadyInitialized {
-			validator.error("Keystore already initialized.")
-		} else {
-			validator.error("Failed initiliazing keystore [%s].", err.Error())
-
-			return err
-		}
-	}
-	validator.debug("Init keystore...done.")
-
 	// Init crypto engine
-	err = validator.initCryptoEngine()
+	err := validator.initCryptoEngine()
 	if err != nil {
 		validator.error("Failed initiliazing crypto engine [%s].", err.Error())
 		return err
@@ -198,8 +181,6 @@ func (validator *validatorImpl) init(name string, pwd []byte) error {
 }
 
 func (validator *validatorImpl) initCryptoEngine() (err error) {
-	validator.enrollCerts = make(map[string]*x509.Certificate)
-
 	// Init chain publicKey
 	validator.chainPrivateKey, err = validator.eciesSPI.NewPrivateKey(
 		nil, validator.enrollChainKey.(*ecdsa.PrivateKey),

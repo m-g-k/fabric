@@ -23,10 +23,13 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"os"
+	"path/filepath"
 
 	"github.com/hyperledger/fabric/consensus"
 	pb "github.com/hyperledger/fabric/protos"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/spf13/viper"
 )
 
@@ -76,8 +79,15 @@ func loadConfig() (config *viper.Viper) {
 
 	config.SetConfigName("config")
 	config.AddConfigPath("./")
-	config.AddConfigPath("./consensus/obcpbft/")
+	config.AddConfigPath("../consensus/obcpbft/")
 	config.AddConfigPath("../../consensus/obcpbft")
+	// Path to look for the config file in based on GOPATH
+	gopath := os.Getenv("GOPATH")
+	for _, p := range filepath.SplitList(gopath) {
+	    obcpbftpath := filepath.Join(p, "src/github.com/hyperledger/fabric/consensus/obcpbft")
+	    config.AddConfigPath(obcpbftpath)
+	}
+
 	err := config.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("Error reading %s plugin config: %s", configPrefix, err))
@@ -116,4 +126,26 @@ func getValidatorHandles(ids []uint64) (handles []*pb.PeerID) {
 		handles[i], _ = getValidatorHandle(id)
 	}
 	return
+}
+
+type obcGeneric struct {
+	stack consensus.Stack
+}
+
+func (op *obcGeneric) skipTo(seqNo uint64, id []byte, replicas []uint64) {
+	op.stack.SkipTo(seqNo, id, getValidatorHandles(replicas))
+}
+
+func (op *obcGeneric) getState() []byte {
+	return op.stack.GetBlockchainInfoBlob()
+}
+
+func (op *obcGeneric) getLastSeqNo() (uint64, error) {
+	raw, err := op.stack.GetBlockHeadMetadata()
+	if err != nil {
+		return 0, err
+	}
+	meta := &Metadata{}
+	proto.Unmarshal(raw, meta)
+	return meta.SeqNo, nil
 }

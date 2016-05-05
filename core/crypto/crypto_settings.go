@@ -1,8 +1,8 @@
 package crypto
 
 import (
+	"github.com/hyperledger/fabric/core/crypto/primitives"
 	"github.com/op/go-logging"
-	"github.com/hyperledger/fabric/core/crypto/conf"
 	"github.com/spf13/viper"
 )
 
@@ -36,8 +36,17 @@ func Init() (err error) {
 			securityLevel = ovveride
 		}
 	}
+
+	hashAlgorithm := "SHA3"
+	if viper.IsSet("security.hashAlgorithm") {
+		ovveride := viper.GetString("security.hashAlgorithm")
+		if ovveride != "" {
+			hashAlgorithm = ovveride
+		}
+	}
+
 	log.Debug("Working at security level [%d]", securityLevel)
-	if err = conf.InitSecurityLevel(securityLevel); err != nil {
+	if err = primitives.InitSecurityLevel(hashAlgorithm, securityLevel); err != nil {
 		log.Debug("Failed setting security level: [%s]", err)
 
 		return
